@@ -1,6 +1,6 @@
 <?php
 
-namespace Watson\Rememberable\Query;
+namespace Giver\Cacheable\Query;
 
 use Illuminate\Support\Facades\Cache;
 
@@ -39,7 +39,14 @@ class Builder extends \Illuminate\Database\Query\Builder
      *
      * @var string
      */
-    protected $cachePrefix = 'rememberable';
+    protected $cachePrefix = 'cacheable';
+
+    /**
+     * A model class instance.
+     *
+     * @var string
+     */
+    protected $model = null;
 
     /**
      * Execute the query as a "select" statement.
@@ -78,13 +85,13 @@ class Builder extends \Illuminate\Database\Query\Builder
         $callback = $this->getCacheCallback($columns);
 
         // If the "minutes" value is less than zero, we will use that as the indicator
-        // that the value should be remembered values should be stored indefinitely
-        // and if we have minutes we will use the typical remember function here.
+        // that the value should be cached values should be stored indefinitely
+        // and if we have minutes we will use the typical cache function here.
         if ($minutes < 0) {
-            return $cache->rememberForever($key, $callback);
+            return $cache->cacheForever($key, $callback);
         }
 
-        return $cache->remember($key, $minutes, $callback);
+        return $cache->cache($key, $minutes, $callback);
     }
 
     /**
@@ -94,7 +101,7 @@ class Builder extends \Illuminate\Database\Query\Builder
      * @param  string  $key
      * @return $this
      */
-    public function remember($minutes, $key = null)
+    public function cache($minutes, $key = null)
     {
         list($this->cacheMinutes, $this->cacheKey) = [$minutes, $key];
 
@@ -107,9 +114,9 @@ class Builder extends \Illuminate\Database\Query\Builder
      * @param  string  $key
      * @return \Illuminate\Database\Query\Builder|static
      */
-    public function rememberForever($key = null)
+    public function cacheForever($key = null)
     {
-        return $this->remember(-1, $key);
+        return $this->cache(-1, $key);
     }
 
     /**
@@ -117,7 +124,7 @@ class Builder extends \Illuminate\Database\Query\Builder
      *
      * @return \Illuminate\Database\Query\Builder|static
      */
-    public function dontRemember()
+    public function dontCache()
     {
         $this->cacheMinutes = $this->cacheKey = $this->cacheTags = null;
 
@@ -125,13 +132,13 @@ class Builder extends \Illuminate\Database\Query\Builder
     }
 
     /**
-     * Indicate that the query should not be cached. Alias for dontRemember().
+     * Indicate that the query should not be cached. Alias for dontCache().
      *
      * @return \Illuminate\Database\Query\Builder|static
      */
-    public function doNotRemember()
+    public function doNotCache()
     {
-        return $this->dontRemember();
+        return $this->dontCache();
     }
 
     /**
@@ -193,15 +200,36 @@ class Builder extends \Illuminate\Database\Query\Builder
     }
 
     /**
+     * Get the current model instance.
+     *
+     * @return Class
+     */
+    public function getModel()
+    {
+        return $this->model;
+    }
+
+    /**
      * Generate the unique cache key for the query.
      *
      * @return string
      */
-    public function generateCacheKey()
+    public function generateCacheKey__()
     {
         $name = $this->connection->getName();
 
         return hash('sha256', $name.$this->toSql().serialize($this->getBindings()));
+    }
+
+    public function generateCacheKey($query)
+    {
+        $conn_name = ucfirst($this->connection->getName());
+        $model_name = get_class($this->getModel());
+        $query_string = $this->toSql();
+        $query_params = $this->getBindings();
+        $key = join('_', [$conn_name, $model_name, hash('sha256', $query_string . serialize($query_params))]);
+
+        return $key;
     }
 
     /**
@@ -251,4 +279,17 @@ class Builder extends \Illuminate\Database\Query\Builder
 
         return $this;
     }
+
+    /**
+     * Set model
+     *
+     * @param Class $model
+     *
+     * @return void
+     */
+    public function setModel($model)
+    {
+        $this->model = $model;
+    }
+
 }

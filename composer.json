@@ -1,12 +1,12 @@
 {
-    "name": "watson/rememberable",
+    "name": "giver/cacheable",
     "description": "Query caching for Laravel 5",
-    "keywords": ["laravel", "eloquent", "caching", "remember"],
+    "keywords": ["laravel", "eloquent", "caching", "cache"],
     "license": "MIT",
     "authors": [
         {
-            "name": "Dwight Watson",
-            "email": "dwight@studiousapp.com"
+            "name": "GIVER",
+            "email": "dev@giver.com.br"
         }
     ],
     "require": {
@@ -20,7 +20,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Watson\\Rememberable\\": "src/"
+            "Giver\\Cacheable\\": "src/"
         }
     }
 }
