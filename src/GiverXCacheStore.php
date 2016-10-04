@@ -118,4 +118,89 @@ class GiverXCacheStore extends \Illuminate\Cache\TaggableStore implements \Illum
     {
         return $this->prefix;
     }
+    
+    public function deleteByPrefix($prefix)
+    {
+        $count = 0;
+        $keys = GiverXCacheStore::_getCacheKeys();
+
+        if (is_array($keys)) {
+            foreach ($keys as $key) {
+                if (strpos($key, $prefix) === 0) {
+                    $count++;
+                    GiverXCacheStore::delete($key);
+                }
+            }
+        }
+        return $count;
+    }
+
+    protected function _getCacheKeys()
+    {
+        GiverXCacheStore::checkAuth();
+        $keys = array();
+        for ($i = 0, $count = xcache_count(XC_TYPE_VAR); $i < $count; $i++) {
+            $entries = xcache_list(XC_TYPE_VAR, $i);
+            if (is_array($entries['cache_list'])) {
+                foreach ($entries['cache_list'] as $entry) {
+                    $keys[] = $entry['name'];
+                }
+            }
+        }
+
+        return $keys;
+    }
+
+    protected function checkAuth()
+    {
+        if (ini_get('xcache.admin.enable_auth'))
+        {
+            echo 'To use all features of the "GiverXCacheStore" class, you must set "xcache.admin.enable_auth" to "Off" in your php.ini.';
+            die();
+        }
+    }
+
+    protected function _getKey($id)
+    {
+        $prefix = isset($this->prefix) ? $this->prefix : '';
+
+        if ( ! $prefix || strpos($id, $prefix) === 0) {
+            return $id;
+        } else {
+            return $prefix . $id;
+        }
+    }
+
+    public function delete($id)
+    {
+        $key = GiverXCacheStore::_getKey($id);
+
+        if (strpos($key, '*') !== false) {
+            return GiverXCacheStore::deleteByRegex('/' . str_replace('*', '.*', $key) . '/');
+        }
+
+        return GiverXCacheStore::_doDelete($key);
+    }
+
+    public function deleteByRegex($regex)
+    {
+        $count = 0;
+        $keys = GiverXCacheStore::_getCacheKeys();
+
+        if (is_array($keys)) {
+            foreach ($keys as $key) {
+                if (preg_match($regex, $key)) {
+                    $count++;
+                    $this->delete($key);
+                }
+            }
+        }
+        return $count;
+    }
+
+    protected function _doDelete($id)
+    {
+        return xcache_unset($id);
+    }
+
 }
