@@ -11,6 +11,7 @@ trait Cacheable
      *
      * @return \Illuminate\Database\Query\Builder
      */
+
     protected function newBaseQueryBuilder()
     {
         $conn = $this->getConnection();
@@ -20,16 +21,16 @@ trait Cacheable
         $builder = new Builder($conn, $grammar, $conn->getPostProcessor());
         $builder->setModel($this);
 
-        if (isset($this->cacheFor)) {
-            $builder->cache($this->cacheFor);
+        if (isset($this->rememberFor)) {
+            $builder->remember($this->rememberFor);
         }
 
-        if (isset($this->cacheCacheTag)) {
-            $builder->cacheTags($this->cacheCacheTag);
+        if (isset($this->rememberCacheTag)) {
+            $builder->cacheTags($this->rememberCacheTag);
         }
 
-        if (isset($this->cacheCachePrefix)) {
-            $builder->prefix($this->cacheCachePrefix);
+        if (isset($this->rememberCachePrefix)) {
+            $builder->prefix($this->rememberCachePrefix);
         }
 
         return $builder;

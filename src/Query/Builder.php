@@ -39,8 +39,8 @@ class Builder extends \Illuminate\Database\Query\Builder
      *
      * @var string
      */
-    protected $cachePrefix = 'cacheable';
-
+    protected $cachePrefix = 'rememberable';
+    
     /**
      * A model class instance.
      *
@@ -85,13 +85,13 @@ class Builder extends \Illuminate\Database\Query\Builder
         $callback = $this->getCacheCallback($columns);
 
         // If the "minutes" value is less than zero, we will use that as the indicator
-        // that the value should be cached values should be stored indefinitely
-        // and if we have minutes we will use the typical cache function here.
+        // that the value should be remembered values should be stored indefinitely
+        // and if we have minutes we will use the typical remember function here.
         if ($minutes < 0) {
-            return $cache->cacheForever($key, $callback);
+            return $cache->rememberForever($key, $callback);
         }
 
-        return $cache->cache($key, $minutes, $callback);
+        return $cache->remember($key, $minutes, $callback);
     }
 
     /**
@@ -101,8 +101,15 @@ class Builder extends \Illuminate\Database\Query\Builder
      * @param  string  $key
      * @return $this
      */
-    public function cache($minutes, $key = null)
+    public function cache($minutes, $key = null){
+        $this->remember($minutes, $key);
+    }
+
+    public function remember($minutes, $key = null)
     {
+        if(!$minutes){
+            $minutes = 10080; // 7 days
+        }
         list($this->cacheMinutes, $this->cacheKey) = [$minutes, $key];
 
         return $this;
@@ -114,9 +121,9 @@ class Builder extends \Illuminate\Database\Query\Builder
      * @param  string  $key
      * @return \Illuminate\Database\Query\Builder|static
      */
-    public function cacheForever($key = null)
+    public function rememberForever($key = null)
     {
-        return $this->cache(-1, $key);
+        return $this->remember(-1, $key);
     }
 
     /**
@@ -124,7 +131,7 @@ class Builder extends \Illuminate\Database\Query\Builder
      *
      * @return \Illuminate\Database\Query\Builder|static
      */
-    public function dontCache()
+    public function dontRemember()
     {
         $this->cacheMinutes = $this->cacheKey = $this->cacheTags = null;
 
@@ -132,13 +139,13 @@ class Builder extends \Illuminate\Database\Query\Builder
     }
 
     /**
-     * Indicate that the query should not be cached. Alias for dontCache().
+     * Indicate that the query should not be cached. Alias for dontRemember().
      *
      * @return \Illuminate\Database\Query\Builder|static
      */
-    public function doNotCache()
+    public function doNotRemember()
     {
-        return $this->dontCache();
+        return $this->dontRemember();
     }
 
     /**
@@ -196,9 +203,9 @@ class Builder extends \Illuminate\Database\Query\Builder
      */
     public function getCacheKey()
     {
-        return $this->cachePrefix.':'.($this->cacheKey ?: $this->generateCacheKey());
+        return $this->cachePrefix.'_'.($this->cacheKey ?: $this->generateCacheKey());
     }
-
+    
     /**
      * Get the current model instance.
      *
@@ -214,14 +221,7 @@ class Builder extends \Illuminate\Database\Query\Builder
      *
      * @return string
      */
-    public function generateCacheKey__()
-    {
-        $name = $this->connection->getName();
-
-        return hash('sha256', $name.$this->toSql().serialize($this->getBindings()));
-    }
-
-    public function generateCacheKey($query)
+    public function generateCacheKey()
     {
         $conn_name = ucfirst($this->connection->getName());
         $model_name = get_class($this->getModel());
@@ -279,7 +279,7 @@ class Builder extends \Illuminate\Database\Query\Builder
 
         return $this;
     }
-
+    
     /**
      * Set model
      *
@@ -291,5 +291,4 @@ class Builder extends \Illuminate\Database\Query\Builder
     {
         $this->model = $model;
     }
-
 }
