@@ -12,7 +12,7 @@ It works by simply cacheing the SQL query that was used and storing the result. 
 
 Install using Composer, just as you would anything else.
 
-    composer require watson/cacheable
+    composer require giver/cacheable
 
 The easiest way to get started with Eloquent is to create an abstract `App\Model` which you can extend your application models from. In this base model you can import the cacheable trait which will extend the same caching functionality to any queries you build off your model.
 
