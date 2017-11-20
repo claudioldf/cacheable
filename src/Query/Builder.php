@@ -108,7 +108,8 @@ class Builder extends \Illuminate\Database\Query\Builder
     public function remember($minutes, $key = null)
     {
         if(!$minutes){
-            $minutes = 10080; // 7 days
+            # $minutes = 10080; // 7 days
+            $minutes = 720;
         }
         list($this->cacheMinutes, $this->cacheKey) = [$minutes, $key];
 
@@ -223,12 +224,12 @@ class Builder extends \Illuminate\Database\Query\Builder
      */
     public function generateCacheKey()
     {
+        $conn_config = $this->connection->getConfig();
         $conn_name = ucfirst($this->connection->getName());
         $model_name = get_class($this->getModel());
         $query_string = $this->toSql();
         $query_params = $this->getBindings();
-        $key = join('_', [$conn_name, $model_name, hash('sha256', $query_string . serialize($query_params))]);
-
+        $key = join('_', [$conn_name, $model_name, $conn_config['host'], $conn_config['database'], hash('sha256', $query_string . serialize($query_params))]);
         return $key;
     }
 
