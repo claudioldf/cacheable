@@ -9,9 +9,15 @@
             "email": "dev@giver.com.br"
         }
     ],
+    "repositories": [
+	{
+		"type": "git",
+		"url": "https://github.com/claudioldf/cacheable.git"
+	}
+    ],
     "require": {
         "php": ">=5.4.0",
-        "illuminate/database": "~5.0",
+        "claudioldf/database": "5.1.16",
         "illuminate/support": "~5.0"
     },
     "require-dev": {
